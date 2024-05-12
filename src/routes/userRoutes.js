@@ -1,5 +1,6 @@
 const express = require("express");
 const User = require("../models/user");
+const Task = require("../models/task");
 const auth = require("../middleware/auth");
 
 const router = new express.Router();
@@ -104,12 +105,14 @@ router.patch("/users/me", auth, async (req, res) => {
 
 router.delete("/users/me", auth, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.user._id);
-    if (!user) {
+    await Task.deleteMany({ owner: req.user._id });
+    await User.deleteOne({ _id: req.user._id });
+    if (!req.user) {
       return res.status(400).send("Cant update! User not found");
     }
-    res.status(200).send(user);
+    res.status(200).send(req.user);
   } catch (e) {
+    console.log(e);
     res.status(500).send(e);
   }
 });
