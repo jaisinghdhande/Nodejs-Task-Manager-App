@@ -18,10 +18,27 @@ router.post("/tasks", auth, async (req, res) => {
     res.status(500).send("Error getting Task");
   }
 });
-
+//if limit is undefined, mongoose is gona ignore it and provide the complete result
 router.get("/tasks", auth, async (req, res) => {
+
+  const match = {};
+  const sortObject = {};
+
+  if (req.query.sort) {
+    const sortParam = req.query.sort.split(":")[0];
+    const order = req.query.sort.split(":")[1];
+    sortObject[sortParam] = order === "desc" ? -1 : 1;
+  }
+
+  if (req.query.completed) {
+    match.completed = req.query.completed === "true";
+  }
+
   try {
-    const response = await Task.find({ owner: req.user._id });
+    const response = await Task.find({ owner: req.user._id, ...match })
+      .limit(parseInt(req.query.limit))
+      .skip(parseInt(req.query.skip))
+      .sort(sortObject);
     res.status(200).send(response);
   } catch (e) {
     console.log(e);
